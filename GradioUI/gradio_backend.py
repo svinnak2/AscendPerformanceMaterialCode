@@ -53,8 +53,8 @@ class Backend:
     index = "bedrock-index"
     service = 'aoss'
     
-    LANGFUSE_PUBLIC_KEY = "pk-lf-f7b59b69-3122-4669-ac56-ac1a566027fb" #replace it with your public key
-    LANGFUSE_SECRET_KEY = "sk-lf-e399949a-a9fd-4730-90d2-3281a0ed23e4" #replace it with you secret key
+    LANGFUSE_PUBLIC_KEY = "XXXXXXX" #replace it with your public key
+    LANGFUSE_SECRET_KEY = "XXXXXXX" #replace it with you secret key
     LANGFUSE_HOST="https://us.cloud.langfuse.com"
     
     model_kwargs_claude = {
