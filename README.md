@@ -4,7 +4,7 @@ To achieve these objectives, I implemented the following end-to-end architecture
 
 ![image](https://github.com/user-attachments/assets/c381a059-2f3f-4376-89b4-32d01a8f80ae)
 
-The Following picture provides a sample important code to few demonstrate the end-to-end flow
+The Following picture provides a few important python codebooks to few demonstrate the end-to-end flow
 
 ![image](https://github.com/user-attachments/assets/82e050af-b6d9-4339-9523-d262513169bd)
 
