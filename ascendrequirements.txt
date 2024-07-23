@@ -1,0 +1,10 @@
+botocore==1.34.126
+boto3
+google-api-python-client
+PyPDF2
+langchain
+retrying
+opensearch-py
+langfuse
+ragas
+langchain_aws
