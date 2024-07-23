@@ -1,3 +1,5 @@
+![image](https://github.com/user-attachments/assets/0cdb2809-f6ae-4fd0-9dd4-5cd5fada6c74)
+
 The objective of the project is 1) **Objective - 1:** to create a sales leads directory by scraping data from the web based on clients requirements 2) **Objective - 2:** to provide a Retrieval Augment Generation (RAG) based conversational AI solution.
 
 To achieve these objectives, I implemented the following end-to-end architecture in AWS cloud.
