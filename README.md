@@ -4,8 +4,7 @@
 
 **Solution:** To achieve these objectives, I implemented the following end-to-end architecture in AWS cloud.
 
-![image](https://github.com/user-attachments/assets/42f3c474-4ea0-4352-aa35-898ddd0738e7)
-
+![image](https://github.com/user-attachments/assets/d9b5a3e1-ae08-49ea-a9ee-aa277fe17f6c)
 
 **Sample Code:** The Following picture provides a few important python codebooks to few demonstrate the end-to-end flow
 
