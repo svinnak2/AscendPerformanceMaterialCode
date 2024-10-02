@@ -1,0 +1,23 @@
+import boto3
+
+# Initialize the S3 client
+s3 = boto3.client('s3')
+
+# Define the bucket name and folder key
+bucket_name = 'MyS3_Bucket'
+prefix = 'PublicFolder/BOA/Pdf_file/'
+
+# Function to list the S3 URIs of files within the specified key
+def list_s3_uris(bucket, prefix):
+    response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
+
+    # Check if the bucket contains objects
+    if 'Contents' in response:
+        for obj in response['Contents']:
+            s3_uri = f"s3://{bucket}/{obj['Key']}"
+            print(s3_uri)
+    else:
+        print("No files found in the specified folder.")
+
+# Call the function to list the S3 URIs
+list_s3_uris(bucket_name, prefix)
