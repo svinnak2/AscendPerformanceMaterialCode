@@ -1,30 +1,12 @@
-from PyPDF2 import PdfWriter
-from io import BytesIO
-
-# Given list
-Concat_Summary = [
-    {'Key': 'Public_Data/BOA/Pdf_Split_Working_Dir/', 'LastModified': '2024-10-02T20:07:18', 'ETag': '"d41d8cd98f00b204e9800998ecf8427e"', 'Size': 0, 'StorageClass': 'STANDARD'},
+Concat_Summary = [ 
+    {'Key': 'Public_Data/BOA/Pdf_Split_Working_Dir/LOB_18-35.pdf', 'LastModified': '2024-10-02T20:07:18', 'ETag': '"d41d8cd98f00b204e9800998ecf8427e"', 'Size': 0, 'StorageClass': 'STANDARD'},
     {'Key': 'Public_Data/BOA/Pdf_Split_Working_Dir/Community_Impact_page_42-47.pdf', 'LastModified': '2024-10-02T20:11:37', 'ETag': '"1027ac9778404ea6db0865b100a22716"', 'Size': 596231, 'StorageClass': 'STANDARD'},
     {'Key': 'Public_Data/BOA/Pdf_Split_Working_Dir/Company_Performance_page_4-17.pdf', 'LastModified': '2024-10-02T20:11:37', 'ETag': '"e47fa9e3961d662f6d47175b320a64df"', 'Size': 1787022, 'StorageClass': 'STANDARD'}
 ]
 
-# Extract and append all ETag values
-etag_content = "\n".join([item['ETag'] for item in Concat_Summary])
+# Sort the list by the ending number in the "Key"
+sorted_summary = sorted(Concat_Summary, key=lambda x: int(x['Key'].split('_')[-1].split('-')[-1]), reverse=True)
 
-# Write the ETags to a PDF file
-pdf_writer = PdfWriter()
-output_pdf = BytesIO()
-
-# Add a page with the concatenated ETag content
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-
-pdf_canvas = canvas.Canvas(output_pdf, pagesize=letter)
-pdf_canvas.drawString(100, 750, "ETags:")
-pdf_canvas.drawString(100, 730, etag_content)
-pdf_canvas.showPage()
-pdf_canvas.save()
-
-# Save to a file
-with open("etags_output.pdf", "wb") as pdf_file:
-    pdf_file.write(output_pdf.getvalue())
+# Display the sorted result
+for item in sorted_summary:
+    print(item)
