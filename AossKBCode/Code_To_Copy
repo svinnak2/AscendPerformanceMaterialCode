@@ -1,16 +1,7 @@
-pdub_data_sr_uri = [
-    'Public_Data/BOA/Pdf_Split_Working_Dir/',
-    'Public_Data/BOA/Pdf_Split_Working_Dir/Community_Impact_page_42-47.pdf',
-    'Public_Data/BOA/Pdf_Split_Working_Dir/Company_Performance_page_4-17.pdf',
-    'Public_Data/BOA/Pdf_Split_Working_Dir/lines_of_business_18-35.pdf'
-]
-
-# Filter out items that do not have a number range and sort by the ending number
-sorted_uris = sorted(
-    [uri for uri in pdub_data_sr_uri if any(char.isdigit() for char in uri)],
-    key=lambda x: int(x.split('_')[-1].split('-')[-1]),
-    reverse=True
-)
-
-# Display the sorted result
-print(sorted_uris)
+# Loop through each <p> tag and remove any <a href> or <a name> tags
+for p in p_tags:
+    # Find and decompose (remove) all <a href> and <a name> tags inside the <p> tag
+    for a_tag in p.find_all('a', href=True):  # Removes <a href> tags
+        a_tag.decompose()
+    for a_tag in p.find_all('a', attrs={"name": True}):  # Removes <a name> tags
+        a_tag.decompose()
