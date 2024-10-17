@@ -17,10 +17,15 @@ def upload_file_to_s3(file, bucket, s3_path):
     s3 = boto3.client('s3')
     s3.upload_fileobj(file, bucket, s3_path)
 
-# Local Upload Function
+# Local Upload Function (without using getbuffer)
 def save_file_locally(file, filename):
-    with open(os.path.join(local_folder, filename), "wb") as f:
-        f.write(file.getbuffer())
+    file_path = os.path.join(local_folder, filename)
+    
+    # Open the file in binary mode and write the content directly
+    with open(file_path, "wb") as f:
+        # Read and write file content without using getbuffer
+        f.write(file.read())  # Reads file data in binary and saves it directly
+    return file_path
 
 # Streamlit interface
 st.title("File Upload in SageMaker to S3 and Local Directory")
@@ -38,8 +43,8 @@ if uploaded_file is not None:
     st.write("File size: ", uploaded_file.size, " bytes")
 
     # Save file locally
-    save_file_locally(uploaded_file, uploaded_file.name)
-    st.success(f"File saved locally at {local_folder}/{uploaded_file.name}")
+    file_path = save_file_locally(uploaded_file, uploaded_file.name)
+    st.success(f"File saved locally at {file_path}")
 
     # Handle and display the contents of different file types
     if uploaded_file.type == "text/plain":  # Text files
@@ -47,12 +52,12 @@ if uploaded_file is not None:
         st.text(uploaded_file.read().decode("utf-8"))
     
     elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":  # Excel files
-        df = pd.read_excel(uploaded_file)
+        df = pd.read_excel(file_path)  # Read from local path
         st.write("File Content (Excel):")
         st.dataframe(df)
 
     elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":  # Word files
-        doc = Document(uploaded_file)
+        doc = Document(file_path)  # Read from local path
         doc_text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
         st.write("File Content (Word):")
         st.text(doc_text)
@@ -60,7 +65,7 @@ if uploaded_file is not None:
     elif uploaded_file.type == "application/pdf":  # PDF files
         try:
             # Option 1: Using PyPDF2
-            pdf_reader = PyPDF2.PdfReader(uploaded_file)
+            pdf_reader = PyPDF2.PdfReader(file_path)  # Read from local path
             pdf_text = ""
             for page_num in range(len(pdf_reader.pages)):
                 page = pdf_reader.pages[page_num]
@@ -71,7 +76,7 @@ if uploaded_file is not None:
             st.error(f"Error reading PDF with PyPDF2: {e}")
 
         # Option 2: Using pdfplumber for more robust extraction
-        with pdfplumber.open(uploaded_file) as pdf:
+        with pdfplumber.open(file_path) as pdf:
             pdf_text_plumber = ""
             for page in pdf.pages:
                 pdf_text_plumber += page.extract_text()
@@ -80,7 +85,8 @@ if uploaded_file is not None:
 
     elif uploaded_file.type == "text/html":  # HTML files
         st.write("File Content (HTML):")
-        html_text = uploaded_file.read().decode("utf-8")
+        with open(file_path, "r", encoding="utf-8") as html_file:
+            html_text = html_file.read()
         st.html(html_text)
 
     # Optionally upload to S3
