@@ -1,68 +1,93 @@
 import streamlit as st
 import boto3
 import os
+import shutil
 import pandas as pd
-import json
 import PyPDF2
 import pdfplumber
+from docx import Document
 
-# Function to upload files to S3 (optional if you want to store the files in S3)
+# Set up the local save directory within SageMaker
+local_folder = "/home/scope/memo"
+if not os.path.exists(local_folder):
+    os.makedirs(local_folder)
+
+# S3 Upload Function
 def upload_file_to_s3(file, bucket, s3_path):
     s3 = boto3.client('s3')
     s3.upload_fileobj(file, bucket, s3_path)
 
-# Streamlit file uploader
-st.title('File Selector in SageMaker using Streamlit')
+# Local Upload Function
+def save_file_locally(file, filename):
+    with open(os.path.join(local_folder, filename), "wb") as f:
+        f.write(file.getbuffer())
 
-# File Uploader widget
-uploaded_file = st.file_uploader("Choose a file", type=["csv", "txt", "json", "pdf"])
+# Streamlit interface
+st.title("File Upload in SageMaker to S3 and Local Directory")
+
+# File uploader widget supporting multiple types
+uploaded_file = st.file_uploader(
+    "Choose a file", 
+    type=["txt", "xlsx", "docx", "pdf", "html"]
+)
 
 if uploaded_file is not None:
-    # Display file details
+    # Display file information
     st.write("Filename: ", uploaded_file.name)
     st.write("File type: ", uploaded_file.type)
     st.write("File size: ", uploaded_file.size, " bytes")
 
-    # Read and display file content
-    if uploaded_file.type == "text/csv":
-        df = pd.read_csv(uploaded_file)
-        st.write("File Content (CSV):")
-        st.dataframe(df)
-        
-    elif uploaded_file.type == "application/json":
-        data = json.load(uploaded_file)
-        st.write("File Content (JSON):")
-        st.json(data)
-        
-    elif uploaded_file.type == "text/plain":
+    # Save file locally
+    save_file_locally(uploaded_file, uploaded_file.name)
+    st.success(f"File saved locally at {local_folder}/{uploaded_file.name}")
+
+    # Handle and display the contents of different file types
+    if uploaded_file.type == "text/plain":  # Text files
         st.write("File Content (Text):")
         st.text(uploaded_file.read().decode("utf-8"))
     
-    elif uploaded_file.type == "application/pdf":
-        st.write("File Content (PDF):")
-        
-        # Option 1: Using PyPDF2
+    elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":  # Excel files
+        df = pd.read_excel(uploaded_file)
+        st.write("File Content (Excel):")
+        st.dataframe(df)
+
+    elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":  # Word files
+        doc = Document(uploaded_file)
+        doc_text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
+        st.write("File Content (Word):")
+        st.text(doc_text)
+
+    elif uploaded_file.type == "application/pdf":  # PDF files
         try:
+            # Option 1: Using PyPDF2
             pdf_reader = PyPDF2.PdfReader(uploaded_file)
             pdf_text = ""
             for page_num in range(len(pdf_reader.pages)):
                 page = pdf_reader.pages[page_num]
                 pdf_text += page.extract_text()
+            st.write("File Content (PDF - PyPDF2):")
             st.text(pdf_text)
         except Exception as e:
             st.error(f"Error reading PDF with PyPDF2: {e}")
-        
-        # Option 2: Using pdfplumber (for better text extraction)
+
+        # Option 2: Using pdfplumber for more robust extraction
         with pdfplumber.open(uploaded_file) as pdf:
             pdf_text_plumber = ""
             for page in pdf.pages:
                 pdf_text_plumber += page.extract_text()
+            st.write("File Content (PDF - pdfplumber):")
             st.text(pdf_text_plumber)
+
+    elif uploaded_file.type == "text/html":  # HTML files
+        st.write("File Content (HTML):")
+        html_text = uploaded_file.read().decode("utf-8")
+        st.html(html_text)
 
     # Optionally upload to S3
     bucket_name = st.text_input("S3 Bucket Name (Optional, if you want to upload)")
     s3_path = st.text_input("S3 Path (Optional)")
-    
+
     if st.button('Upload to S3') and bucket_name and s3_path:
+        uploaded_file.seek(0)  # Reset file pointer before uploading
         upload_file_to_s3(uploaded_file, bucket_name, s3_path)
-        st.success(f"File uploaded to {bucket_name}/{s3_path} successfully!")
+        st.success(f"File uploaded to S3 at {bucket_name}/{s3_path} successfully!")
