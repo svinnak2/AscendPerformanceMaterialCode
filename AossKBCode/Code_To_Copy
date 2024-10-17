@@ -1,99 +1,46 @@
 import streamlit as st
-import boto3
-import os
-import shutil
-import pandas as pd
-import PyPDF2
-import pdfplumber
-from docx import Document
 
-# Set up the local save directory within SageMaker
-local_folder = "/home/scope/memo"
-if not os.path.exists(local_folder):
-    os.makedirs(local_folder)
+# Create a container to organize content
+with st.container():
+    st.header("Page Split Example")
 
-# S3 Upload Function
-def upload_file_to_s3(file, bucket, s3_path):
-    s3 = boto3.client('s3')
-    s3.upload_fileobj(file, bucket, s3_path)
+    # Split the page into two parts using st.columns()
+    col1, col2 = st.columns([1, 1])
 
-# Local Upload Function (without using getbuffer)
-def save_file_locally(file, filename):
-    file_path = os.path.join(local_folder, filename)
+    # Add content to the first part
+    with col1:
+        st.subheader("Left Side")
+        st.write("This content is displayed on the left side.")
     
-    # Open the file in binary mode and write the content directly
-    with open(file_path, "wb") as f:
-        # Read and write file content without using getbuffer
-        f.write(file.read())  # Reads file data in binary and saves it directly
-    return file_path
+    # Add content to the second part
+    with col2:
+        st.subheader("Right Side")
+        st.write("This content is displayed on the right side.")
 
-# Streamlit interface
-st.title("File Upload in SageMaker to S3 and Local Directory")
 
-# File uploader widget supporting multiple types
-uploaded_file = st.file_uploader(
-    "Choose a file", 
-    type=["txt", "xlsx", "docx", "pdf", "html"]
-)
 
-if uploaded_file is not None:
-    # Display file information
-    st.write("Filename: ", uploaded_file.name)
-    st.write("File type: ", uploaded_file.type)
-    st.write("File size: ", uploaded_file.size, " bytes")
 
-    # Save file locally
-    file_path = save_file_locally(uploaded_file, uploaded_file.name)
-    st.success(f"File saved locally at {file_path}")
 
-    # Handle and display the contents of different file types
-    if uploaded_file.type == "text/plain":  # Text files
-        st.write("File Content (Text):")
-        st.text(uploaded_file.read().decode("utf-8"))
-    
-    elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":  # Excel files
-        df = pd.read_excel(file_path)  # Read from local path
-        st.write("File Content (Excel):")
-        st.dataframe(df)
 
-    elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":  # Word files
-        doc = Document(file_path)  # Read from local path
-        doc_text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
-        st.write("File Content (Word):")
-        st.text(doc_text)
 
-    elif uploaded_file.type == "application/pdf":  # PDF files
-        try:
-            # Option 1: Using PyPDF2
-            pdf_reader = PyPDF2.PdfReader(file_path)  # Read from local path
-            pdf_text = ""
-            for page_num in range(len(pdf_reader.pages)):
-                page = pdf_reader.pages[page_num]
-                pdf_text += page.extract_text()
-            st.write("File Content (PDF - PyPDF2):")
-            st.text(pdf_text)
-        except Exception as e:
-            st.error(f"Error reading PDF with PyPDF2: {e}")
 
-        # Option 2: Using pdfplumber for more robust extraction
-        with pdfplumber.open(file_path) as pdf:
-            pdf_text_plumber = ""
-            for page in pdf.pages:
-                pdf_text_plumber += page.extract_text()
-            st.write("File Content (PDF - pdfplumber):")
-            st.text(pdf_text_plumber)
 
-    elif uploaded_file.type == "text/html":  # HTML files
-        st.write("File Content (HTML):")
-        with open(file_path, "r", encoding="utf-8") as html_file:
-            html_text = html_file.read()
-        st.html(html_text)
 
-    # Optionally upload to S3
-    bucket_name = st.text_input("S3 Bucket Name (Optional, if you want to upload)")
-    s3_path = st.text_input("S3 Path (Optional)")
 
-    if st.button('Upload to S3') and bucket_name and s3_path:
-        uploaded_file.seek(0)  # Reset file pointer before uploading
-        upload_file_to_s3(uploaded_file, bucket_name, s3_path)
-        st.success(f"File uploaded to S3 at {bucket_name}/{s3_path} successfully!")
+
+import streamlit as st
+
+# Create two columns with equal width
+col1, col2 = st.columns(2)
+
+# Content for the first column
+with col1:
+    st.header("Left Side")
+    st.write("This is the left part of the web page.")
+    st.image("https://via.placeholder.com/150", caption="Sample Image Left")
+
+# Content for the second column
+with col2:
+    st.header("Right Side")
+    st.write("This is the right part of the web page.")
+    st.image("https://via.placeholder.com/150", caption="Sample Image Right")
