@@ -1,46 +1,22 @@
-import streamlit as st
-
-# Create a container to organize content
-with st.container():
-    st.header("Page Split Example")
-
-    # Split the page into two parts using st.columns()
-    col1, col2 = st.columns([1, 1])
-
-    # Add content to the first part
-    with col1:
-        st.subheader("Left Side")
-        st.write("This content is displayed on the left side.")
+# Custom CSS to increase font size of labels for file_uploader, selectbox, and slider
+st.markdown(
+    """
+    <style>
+    /* Change font size for file_uploader label */
+    .css-177yq6e { 
+        font-size: 20px !important;
+    }
     
-    # Add content to the second part
-    with col2:
-        st.subheader("Right Side")
-        st.write("This content is displayed on the right side.")
-
-
-
-
-
-
-
-
-
-
-
-
-import streamlit as st
-
-# Create two columns with equal width
-col1, col2 = st.columns(2)
-
-# Content for the first column
-with col1:
-    st.header("Left Side")
-    st.write("This is the left part of the web page.")
-    st.image("https://via.placeholder.com/150", caption="Sample Image Left")
-
-# Content for the second column
-with col2:
-    st.header("Right Side")
-    st.write("This is the right part of the web page.")
-    st.image("https://via.placeholder.com/150", caption="Sample Image Right")
+    /* Change font size for selectbox label */
+    .css-16huue1 {
+        font-size: 20px !important;
+    }
+    
+    /* Change font size for slider label */
+    .css-145kmo2 {
+        font-size: 20px !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
