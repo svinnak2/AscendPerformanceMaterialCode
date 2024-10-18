@@ -1,20 +1,19 @@
-# Custom CSS to increase font size of labels for file_uploader, selectbox, and slider
 st.markdown(
     """
     <style>
-    /* Change font size for file_uploader label */
-    .css-177yq6e { 
-        font-size: 20px !important;
+    /* Set global default font size */
+    html, body, [class*="css"] {
+        font-size: 16px !important;
     }
-    
-    /* Change font size for selectbox label */
-    .css-16huue1 {
-        font-size: 20px !important;
-    }
-    
-    /* Change font size for slider label */
-    .css-145kmo2 {
-        font-size: 20px !important;
+
+    /* Set specific font sizes for headings */
+    h1 { font-size: 30px !important; }
+    h2 { font-size: 24px !important; }
+    h3 { font-size: 20px !important; }
+
+    /* Customize font size for Streamlit widgets */
+    .stSlider, .stSelectbox, .stFileUploader {
+        font-size: 18px !important;
     }
     </style>
     """,
