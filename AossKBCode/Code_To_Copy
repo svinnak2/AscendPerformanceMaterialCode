@@ -1,21 +1,12 @@
-st.markdown(
-    """
-    <style>
-    /* Set global default font size */
-    html, body, [class*="css"] {
-        font-size: 16px !important;
-    }
+import streamlit as st
 
-    /* Set specific font sizes for headings */
-    h1 { font-size: 30px !important; }
-    h2 { font-size: 24px !important; }
-    h3 { font-size: 20px !important; }
-
-    /* Customize font size for Streamlit widgets */
-    .stSlider, .stSelectbox, .stFileUploader {
-        font-size: 18px !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# Define a container with vertical scroll bar using st.beta_container (or st.container in newer versions)
+with st.container():
+    st.markdown("""
+        <div style="height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px;">
+            <p>This is content inside a scrollable container.</p>
+            <p>Add as much content here as needed.</p>
+            <p>Another line of content to demonstrate scrolling.</p>
+            <p>Keep adding content to see the scroll bar.</p>
+        </div>
+    """, unsafe_allow_html=True)
