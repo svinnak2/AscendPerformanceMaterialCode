@@ -1,33 +1,14 @@
 import boto3
-import json
 
 # Initialize S3 client
 s3 = boto3.client('s3')
 
-# S3 URI and bucket/key extraction
-s3_uri = "s3://your-bucket-name/path/to/your-file.json"
-bucket_name = s3_uri.split('/')[2]
-key = '/'.join(s3_uri.split('/')[3:])
+# List all objects with prefix
+bucket_name = "ABC"
+prefix = "PD/LKM/"
+response = s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
 
-# Define your S3 bucket name and JSON file key
-bucket_name = 'your-bucket-name'
-json_file_key = 'path/to/your-file.json'
-
-# Read the JSON file content
-response = s3.get_object(Bucket=bucket_name, Key=json_file_key)
-json_content = response['Body'].read().decode('utf-8')
-
-# Parse JSON content
-data = json.loads(json_content)
-
-# Display the JSON content
-print("Full JSON Content:")
-print(json.dumps(data, indent=4))
-
-# Extract and print specific fields
-job_name = data.get("jobName")
-transcript_text = data.get("results", {}).get("transcripts", [{}])[0].get("transcript")
-
-print("\nExtracted Content:")
-print(f"Job Name: {job_name}")
-print(f"Transcript: {transcript_text}")
+# Filter and print only JSON files
+json_files = [f"s3://{bucket_name}/{item['Key']}" for item in response.get('Contents', []) if item['Key'].endswith('.json')]
+for json_file in json_files:
+    print(json_file)
