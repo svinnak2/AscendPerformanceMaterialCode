@@ -1,14 +1,41 @@
+import streamlit as st
+
 import boto3
 
-# Initialize S3 client
-s3 = boto3.client('s3')
 
-# List all objects with prefix
-bucket_name = "ABC"
-prefix = "PD/LKM/"
-response = s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
 
-# Filter and print only JSON files
-json_files = [f"s3://{bucket_name}/{item['Key']}" for item in response.get('Contents', []) if item['Key'].endswith('.json')]
-for json_file in json_files:
-    print(json_file)
+def upload_to_s3(file, bucket_name, object_key):
+
+    s3_client = boto3.client('s3')
+
+    s3_client.upload_fileobj(file, bucket_name, object_key)
+
+
+
+def main():
+
+    uploaded_file = st.file_uploader("Choose a file", type=["csv", "xlsx", "pdf"])
+
+    if uploaded_file is not None:
+
+        file_name = uploaded_file.name
+
+        
+
+        # Replace with your actual bucket name and desired object key
+
+        bucket_name = "your-s3-bucket"
+
+        object_key = "your-file-path/" + file_name 
+
+
+
+        upload_to_s3(uploaded_file, bucket_name, object_key)
+
+        st.success("File uploaded successfully!") 
+
+
+
+if __name__ == "__main__": 
+
+    main() 
