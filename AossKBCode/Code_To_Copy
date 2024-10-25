@@ -1,14 +1,38 @@
-import os
-import re
+import boto3
 
-def replace_filename_part(filename, new_name):
-    # Use regex to replace the part before .mp3
-    new_filename = re.sub(r'^.*(?=\.mp3)', new_name, filename)
-    return new_filename
+# Initialize S3 client
+s3 = boto3.client('s3')
 
-# Examples
-file1 = "ABC.mp3"
-file2 = "mynameiskhan.mp3"
+# Function to list all files' S3 URIs in a bucket and key
+def list_all_files_s3_uri(bucket_name, key_name):
+    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=key_name)
+    s3_uris = []
+    
+    if 'Contents' in response:
+        for obj in response['Contents']:
+            s3_uris.append(f"s3://{bucket_name}/{obj['Key']}")
+    
+    return s3_uris
 
-print(replace_filename_part(file1, "XYZ"))      # Output: XYZ.mp3
-print(replace_filename_part(file2, "007"))      # Output: 007.mp3
+# Function to list a specific file's S3 URI in a bucket and key
+def list_specific_file_s3_uri(bucket_name, key_name, file_name):
+    file_key = f"{key_name}/{file_name}"
+    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=file_key)
+    
+    if 'Contents' in response and any(obj['Key'] == file_key for obj in response['Contents']):
+        return f"s3://{bucket_name}/{file_key}"
+    else:
+        return "File not found"
+
+# Example usage
+bucket_name = 'your_bucket_name'
+key_name = 'your_key_name'
+file_name = 'your_file_name.pdf'
+
+# List all files' S3 URIs
+all_files_uris = list_all_files_s3_uri(bucket_name, key_name)
+print("All Files URIs:", all_files_uris)
+
+# List specific file's S3 URI
+specific_file_uri = list_specific_file_s3_uri(bucket_name, key_name, file_name)
+print("Specific File URI:", specific_file_uri)
