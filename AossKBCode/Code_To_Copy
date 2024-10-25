@@ -4,6 +4,11 @@ import json
 # Initialize S3 client
 s3 = boto3.client('s3')
 
+# S3 URI and bucket/key extraction
+s3_uri = "s3://your-bucket-name/path/to/your-file.json"
+bucket_name = s3_uri.split('/')[2]
+key = '/'.join(s3_uri.split('/')[3:])
+
 # Define your S3 bucket name and JSON file key
 bucket_name = 'your-bucket-name'
 json_file_key = 'path/to/your-file.json'
