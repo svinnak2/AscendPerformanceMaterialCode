@@ -1,41 +1,14 @@
-import streamlit as st
+import os
+import re
 
-import boto3
+def replace_filename_part(filename, new_name):
+    # Use regex to replace the part before .mp3
+    new_filename = re.sub(r'^.*(?=\.mp3)', new_name, filename)
+    return new_filename
 
+# Examples
+file1 = "ABC.mp3"
+file2 = "mynameiskhan.mp3"
 
-
-def upload_to_s3(file, bucket_name, object_key):
-
-    s3_client = boto3.client('s3')
-
-    s3_client.upload_fileobj(file, bucket_name, object_key)
-
-
-
-def main():
-
-    uploaded_file = st.file_uploader("Choose a file", type=["csv", "xlsx", "pdf"])
-
-    if uploaded_file is not None:
-
-        file_name = uploaded_file.name
-
-        
-
-        # Replace with your actual bucket name and desired object key
-
-        bucket_name = "your-s3-bucket"
-
-        object_key = "your-file-path/" + file_name 
-
-
-
-        upload_to_s3(uploaded_file, bucket_name, object_key)
-
-        st.success("File uploaded successfully!") 
-
-
-
-if __name__ == "__main__": 
-
-    main() 
+print(replace_filename_part(file1, "XYZ"))      # Output: XYZ.mp3
+print(replace_filename_part(file2, "007"))      # Output: 007.mp3
