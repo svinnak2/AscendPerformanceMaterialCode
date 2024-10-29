@@ -1,38 +1,24 @@
-import boto3
+import json
+import subprocess
+from datetime import datetime
 
-# Initialize S3 client
-s3 = boto3.client('s3')
+# Get the list of all packages in JSON format
+result = subprocess.run(["pip", "list", "--format=json"], stdout=subprocess.PIPE, text=True)
+packages = json.loads(result.stdout)
 
-# Function to list all files' S3 URIs in a bucket and key
-def list_all_files_s3_uri(bucket_name, key_name):
-    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=key_name)
-    s3_uris = []
-    
-    if 'Contents' in response:
-        for obj in response['Contents']:
-            s3_uris.append(f"s3://{bucket_name}/{obj['Key']}")
-    
-    return s3_uris
+# Function to get the install date of each package
+def get_install_date(package_name):
+    result = subprocess.run(["pip", "show", package_name], stdout=subprocess.PIPE, text=True)
+    for line in result.stdout.splitlines():
+        if line.startswith("Location:"):
+            return None  # Skip packages without install dates
+        if line.startswith("Installer:"):
+            return None
+        if line.startswith("Name:"):
+            continue
+        if line.startswith("Requires"):
+            continue
+        if line.startswith("Entry-Points"):
+            continue
 
-# Function to list a specific file's S3 URI in a bucket and key
-def list_specific_file_s3_uri(bucket_name, key_name, file_name):
-    file_key = f"{key_name}/{file_name}"
-    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=file_key)
-    
-    if 'Contents' in response and any(obj['Key'] == file_key for obj in response['Contents']):
-        return f"s3://{bucket_name}/{file_key}"
-    else:
-        return "File not found"
-
-# Example usage
-bucket_name = 'your_bucket_name'
-key_name = 'your_key_name'
-file_name = 'your_file_name.pdf'
-
-# List all files' S3 URIs
-all_files_uris = list_all_files_s3_uri(bucket_name, key_name)
-print("All Files URIs:", all_files_uris)
-
-# List specific file's S3 URI
-specific_file_uri = list_specific_file_s3_uri(bucket_name, key_name, file_name)
-print("Specific File URI:", specific_file_uri)
+    return
