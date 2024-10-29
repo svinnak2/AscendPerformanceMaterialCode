@@ -1,6 +1,5 @@
 import json
 import subprocess
-from datetime import datetime
 
 # Get the list of all packages in JSON format
 result = subprocess.run(["pip", "list", "--format=json"], stdout=subprocess.PIPE, text=True)
@@ -10,15 +9,12 @@ packages = json.loads(result.stdout)
 def get_install_date(package_name):
     result = subprocess.run(["pip", "show", package_name], stdout=subprocess.PIPE, text=True)
     for line in result.stdout.splitlines():
-        if line.startswith("Location:"):
-            return None  # Skip packages without install dates
-        if line.startswith("Installer:"):
-            return None
-        if line.startswith("Name:"):
-            continue
-        if line.startswith("Requires"):
-            continue
-        if line.startswith("Entry-Points"):
-            continue
+        if line.startswith("Installed-Date:"):
+            return line.split(": ", 1)[1]
+    return "Unknown"  # Return "Unknown" if no install date is found
 
-    return
+# List packages with installation dates
+for package in packages:
+    package_name = package["name"]
+    install_date = get_install_date(package_name)
+    print(f"{package_name}: {install_date}")
