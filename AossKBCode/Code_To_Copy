@@ -1,110 +1,31 @@
+pip install pypdf
+pip install spacy
+python -m spacy download en_core_web_sm
+
+
+from pypdf import PdfReader
 import spacy
-from sklearn.metrics.pairwise import cosine_similarity
-from sentence_transformers import SentenceTransformer
-import textstat
-from nltk.sentiment import SentimentIntensityAnalyzer
-import pandas as pd
-import ace_tools as tools
 
-class SummaryMetrics:
-    def __init__(self, speech, summary):
-        self.speech = speech
-        self.summary = summary
-        self.nlp = spacy.load("en_core_web_sm")
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
-        self.sia = SentimentIntensityAnalyzer()
-    
-    # 1. Comprehensiveness (Keyword/Topic Coverage)
-    def measure_comprehensiveness(self):
-        doc_speech = self.nlp(self.speech)
-        doc_summary = self.nlp(self.summary)
+# Load spaCy's English model
+nlp = spacy.load("en_core_web_sm")
 
-        # Extract key nouns and topics
-        keywords_speech = {chunk.text for chunk in doc_speech.noun_chunks}
-        keywords_summary = {chunk.text for chunk in doc_summary.noun_chunks}
+# Function to extract text and count tokens
+def count_tokens_in_pdf(file_path):
+    # Open the PDF file
+    reader = PdfReader(file_path)
+    text = ""
 
-        # Check coverage of speech keywords in the summary
-        coverage = len(keywords_summary.intersection(keywords_speech)) / len(keywords_speech)
-        return round(coverage * 5, 2)  # Scale 1 to 5
+    # Extract text from each page
+    for page in reader.pages:
+        text += page.extract_text() or ""  # Handle cases where extract_text() might return None
 
-    # 2. Clarity (Readability Score)
-    def measure_clarity(self):
-        flesch_reading_ease = textstat.flesch_reading_ease(self.summary)
-        # Convert Flesch score to 1-5 scale (higher score = easier readability)
-        if flesch_reading_ease >= 60:
-            return 5
-        elif flesch_reading_ease >= 50:
-            return 4
-        elif flesch_reading_ease >= 40:
-            return 3
-        elif flesch_reading_ease >= 30:
-            return 2
-        else:
-            return 1
+    # Tokenize the extracted text and count tokens
+    doc = nlp(text)
+    num_tokens = len(doc)
 
-    # 3. Accuracy (Cosine Similarity)
-    def measure_accuracy(self):
-        speech_embedding = self.model.encode([self.speech])
-        summary_embedding = self.model.encode([self.summary])
-        similarity = cosine_similarity(speech_embedding, summary_embedding)[0][0]
-        return round(similarity * 5, 2)  # Scale 1 to 5
+    return num_tokens
 
-    # 4. Neutrality (Sentiment Analysis)
-    def measure_neutrality(self):
-        sentiment = self.sia.polarity_scores(self.summary)
-        # If compound sentiment is close to 0, it's neutral
-        neutrality_score = 5 - abs(sentiment['compound'] * 5)
-        return round(neutrality_score, 2)
-
-    # 5. Readability (Readability Metric)
-    def measure_readability(self):
-        flesch_kincaid_grade = textstat.flesch_kincaid_grade(self.summary)
-        # Convert to 1-5 scale (lower grade level = more readable)
-        if flesch_kincaid_grade <= 5:
-            return 5
-        elif flesch_kincaid_grade <= 8:
-            return 4
-        elif flesch_kincaid_grade <= 10:
-            return 3
-        elif flesch_kincaid_grade <= 12:
-            return 2
-        else:
-            return 1
-
-    # Method to calculate all metrics and return a dictionary
-    def get_all_metrics(self):
-        return {
-            "Comprehensiveness": self.measure_comprehensiveness(),
-            "Clarity": self.measure_clarity(),
-            "Accuracy": self.measure_accuracy(),
-            "Neutrality": self.measure_neutrality(),
-            "Readability": self.measure_readability(),
-        }
-
-# Example Usage
-speech = "The Federal Reserve will continue to monitor inflation closely..."
-summary = "The Fed is focusing on inflation and will take action if needed..."
-
-# Instantiate the class
-metrics = SummaryMetrics(speech, summary)
-
-# Calculate each metric individually
-comprehensiveness_score = metrics.measure_comprehensiveness()
-clarity_score = metrics.measure_clarity()
-accuracy_score = metrics.measure_accuracy()
-neutrality_score = metrics.measure_neutrality()
-readability_score = metrics.measure_readability()
-
-# Display individual metric scores
-print("Comprehensiveness Score:", comprehensiveness_score)
-print("Clarity Score:", clarity_score)
-print("Accuracy Score:", accuracy_score)
-print("Neutrality Score:", neutrality_score)
-print("Readability Score:", readability_score)
-
-# Calculate and display all metrics as a dictionary
-all_metrics = metrics.get_all_metrics()
-print("All Metrics:", all_metrics)
-
-# Display results in a dataframe
-tools.display_dataframe_to_user(name="Summary Quality Metrics", dataframe=pd.DataFrame([all_metrics]))
+# Example usage
+file_path = "sample.pdf"  # Replace with your PDF file path
+num_tokens = count_tokens_in_pdf(file_path)
+print(f"Number of tokens in the PDF: {num_tokens}")
