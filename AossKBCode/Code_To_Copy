@@ -1,31 +1,32 @@
-pip install pypdf
-pip install spacy
-python -m spacy download en_core_web_sm
+import boto3
+import requests
+from requests_aws4auth import AWS4Auth
 
+# Path to the AWS credentials file
+credentials_file_path = './aws/credentials'
 
-from pypdf import PdfReader
-import spacy
+# AWS Profile and Region
+profile_name = "default"  # Replace with the profile name in your credentials file
+region = "us-east-1"      # Replace with your API Gateway's region
+service = "execute-api"   # AWS service for API Gateway
 
-# Load spaCy's English model
-nlp = spacy.load("en_core_web_sm")
+# API Gateway endpoint
+api_url = "https://your-api-id.execute-api.region.amazonaws.com/stage/resource"  # Replace with your API Gateway URL
 
-# Function to extract text and count tokens
-def count_tokens_in_pdf(file_path):
-    # Open the PDF file
-    reader = PdfReader(file_path)
-    text = ""
+# Create a session using credentials from the file
+session = boto3.Session(profile_name=profile_name, region_name=region)
+credentials = session.get_credentials()
 
-    # Extract text from each page
-    for page in reader.pages:
-        text += page.extract_text() or ""  # Handle cases where extract_text() might return None
+aws_access_key = credentials.access_key
+aws_secret_key = credentials.secret_key
+aws_session_token = credentials.token  # This might be None if not using temporary credentials
 
-    # Tokenize the extracted text and count tokens
-    doc = nlp(text)
-    num_tokens = len(doc)
+# Create AWS4Auth object
+aws_auth = AWS4Auth(aws_access_key, aws_secret_key, region, service, session_token=aws_session_token)
 
-    return num_tokens
+# Make GET request
+response = requests.get(api_url, auth=aws_auth)
 
-# Example usage
-file_path = "sample.pdf"  # Replace with your PDF file path
-num_tokens = count_tokens_in_pdf(file_path)
-print(f"Number of tokens in the PDF: {num_tokens}")
+# Print response
+print("Status Code:", response.status_code)
+print("Response Body:", response.text)
