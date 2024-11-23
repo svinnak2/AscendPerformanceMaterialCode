@@ -1,38 +1,61 @@
-import networkx as nx
-import matplotlib.pyplot as plt
+from PIL import Image
+import pytesseract
 
-# Create a new directed graph
-G = nx.DiGraph()
+# Path to the image
+image_path = "path_to_your_image_with_table.jpg"
 
-# Add nodes for each year with attributes
-years = {'2018': 'red', '2020': 'blue', '2021': 'green'}
-for year, color in years.items():
-    G.add_node(year, color=color)
+# Open the image
+image = Image.open(image_path)
 
-# Add topics and edges for each year
-topics_2018 = ['Capital', 'Management', 'Governance', 'Funding']
-topics_2020 = ['Projects completion', 'Plan Governance', 'Operations']
-topics_2021 = ['Material', 'Strategy', 'Lines of Business', 'Principal Officers']
+# Use Tesseract to extract text with table formatting
+custom_config = r'--psm 6'  # Assume a single uniform block of text
+table_text = pytesseract.image_to_string(image, config=custom_config)
 
-# Add nodes and edges with year-based colors
-for topic in topics_2018:
-    G.add_node(topic, color='red')
-    G.add_edge('2018', topic)
+# Print extracted text
+print("Extracted Table Text:")
+print(table_text)
 
-for topic in topics_2020:
-    G.add_node(topic, color='blue')
-    G.add_edge('2020', topic)
 
-for topic in topics_2021:
-    G.add_node(topic, color='green')
-    G.add_edge('2021', topic)
 
-# Extract node colors
-node_colors = [data['color'] for _, data in G.nodes(data=True)]
 
-# Draw the graph
-plt.figure(figsize=(12, 8))
-pos = nx.spring_layout(G, seed=42)  # For consistent layout
-nx.draw(G, pos, with_labels=True, node_color=node_colors, node_size=3000, font_size=10, font_weight='bold', edge_color='gray')
-plt.title('Yearly Topics with Color-Coded Nodes and Relations', fontsize=14)
-plt.show()
+import os
+from PIL import Image
+import pytesseract
+
+# Directory containing images
+image_folder = "/home/images/"
+
+# Initialize a variable to store the concatenated text
+concatenated_text = ""
+
+# Iterate through all files in the folder
+for image_file in os.listdir(image_folder):
+    # Build the full file path
+    image_path = os.path.join(image_folder, image_file)
+    
+    # Check if the file is an image (jpg, png, etc.)
+    if image_file.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')):
+        try:
+            # Open the image
+            image = Image.open(image_path)
+            
+            # Extract text from the image using pytesseract
+            text = pytesseract.image_to_string(image)
+            
+            # Append the text to the concatenated_text variable
+            concatenated_text += text + "\n"  # Add a newline for separation
+            
+            print(f"Processed: {image_file}")  # Log the progress
+        except Exception as e:
+            print(f"Error processing {image_file}: {e}")
+
+# Print the concatenated text
+print("Concatenated Text from All Images:")
+print(concatenated_text)
+
+# Optionally save the concatenated text to a file
+output_file = "/home/images/concatenated_text.txt"
+with open(output_file, "w") as file:
+    file.write(concatenated_text)
+
+print(f"Text saved to {output_file}")
