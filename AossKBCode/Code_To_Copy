@@ -1,61 +1,15 @@
-from PIL import Image
-import pytesseract
+# Path to the text file
+file_path = "your_text_file.txt"
 
-# Path to the image
-image_path = "path_to_your_image_with_table.jpg"
+# Read the file and remove empty lines
+with open(file_path, "r") as file:
+    lines = file.readlines()
 
-# Open the image
-image = Image.open(image_path)
+# Filter out empty lines (and lines with only whitespace)
+cleaned_lines = [line for line in lines if line.strip()]
 
-# Use Tesseract to extract text with table formatting
-custom_config = r'--psm 6'  # Assume a single uniform block of text
-table_text = pytesseract.image_to_string(image, config=custom_config)
+# Write the cleaned lines back to the file
+with open(file_path, "w") as file:
+    file.writelines(cleaned_lines)
 
-# Print extracted text
-print("Extracted Table Text:")
-print(table_text)
-
-
-
-
-import os
-from PIL import Image
-import pytesseract
-
-# Directory containing images
-image_folder = "/home/images/"
-
-# Initialize a variable to store the concatenated text
-concatenated_text = ""
-
-# Iterate through all files in the folder
-for image_file in os.listdir(image_folder):
-    # Build the full file path
-    image_path = os.path.join(image_folder, image_file)
-    
-    # Check if the file is an image (jpg, png, etc.)
-    if image_file.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')):
-        try:
-            # Open the image
-            image = Image.open(image_path)
-            
-            # Extract text from the image using pytesseract
-            text = pytesseract.image_to_string(image)
-            
-            # Append the text to the concatenated_text variable
-            concatenated_text += text + "\n"  # Add a newline for separation
-            
-            print(f"Processed: {image_file}")  # Log the progress
-        except Exception as e:
-            print(f"Error processing {image_file}: {e}")
-
-# Print the concatenated text
-print("Concatenated Text from All Images:")
-print(concatenated_text)
-
-# Optionally save the concatenated text to a file
-output_file = "/home/images/concatenated_text.txt"
-with open(output_file, "w") as file:
-    file.write(concatenated_text)
-
-print(f"Text saved to {output_file}")
+print("Empty lines have been removed.")
