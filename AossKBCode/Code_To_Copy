@@ -1,8 +1,64 @@
-import re
+import pandas as pd
+import json
 
-# Example text with control characters
-text = "Hello,\nWorld!\tThis is a test.\x0c"
+# Read the Excel workbook
+excel_file = 'workbook.xlsx'
+excel_data = pd.read_excel(excel_file, sheet_name=None)
 
-# Remove control characters using regex
-cleaned_text = re.sub(r'[\x00-\x1F\x7F]', '', text)
-print(cleaned_text)  # Output: "Hello,World!This is a test."
+# Create a combined text file with metadata
+text_data = []
+for sheet_name, df in excel_data.items():
+    text_data.append(f"--- Sheet: {sheet_name} ---\n")
+    text_data.append(df.to_csv(index=False, sep='|'))
+    text_data.append("\n")
+
+# Save to a text file
+with open('workbook_data.txt', 'w', encoding='utf-8') as file:
+    file.writelines(text_data)
+
+# Save as JSON for structured processing
+data_dict = {sheet: df.to_dict(orient='records') for sheet, df in excel_data.items()}
+with open('workbook_data.json', 'w', encoding='utf-8') as json_file:
+    json.dump(data_dict, json_file, ensure_ascii=False, indent=4)
+
+
+import pandas as pd
+import json
+
+def extract_excel_to_json(excel_file, output_json_file):
+    """
+    Extracts data from each worksheet in an Excel workbook and saves it in JSON format.
+
+    Parameters:
+        excel_file (str): Path to the Excel workbook.
+        output_json_file (str): Path to the output JSON file.
+    """
+    try:
+        # Read all sheets into a dictionary of DataFrames
+        excel_data = pd.read_excel(excel_file, sheet_name=None)
+        
+        # Create a dictionary to store data
+        data_dict = {}
+
+        for sheet_name, df in excel_data.items():
+            # Convert DataFrame to JSON-like structure
+            data_dict[sheet_name] = df.to_dict(orient='records')
+        
+        # Save the dictionary as a JSON file
+        with open(output_json_file, 'w', encoding='utf-8') as json_file:
+            json.dump(data_dict, json_file, ensure_ascii=False, indent=4)
+
+        print(f"Data has been successfully extracted and saved to {output_json_file}")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+# Example usage
+if __name__ == "__main__":
+    # Path to the Excel workbook
+    excel_file = "path_to_your_excel_file.xlsx"
+    # Path to the output JSON file
+    output_json_file = "output_data.json"
+    
+    # Extract data and save to JSON
+    extract_excel_to_json(excel_file, output_json_file)
