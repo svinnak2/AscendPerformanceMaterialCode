@@ -1,23 +1,25 @@
-import streamlit as st
+import requests
 
-# Title of the application
-st.title("Upload Multiple Files")
+# URL of the PDF document
+url = "https://example.com/document.pdf"
 
-# File uploader with the option to upload multiple files
-uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
+# Headers to mimic a browser request
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Connection": "keep-alive",
+    "Referer": "https://example.com",  # Update with the actual referring page URL if needed
+}
 
-# Process each uploaded file
-if uploaded_files:
-    for uploaded_file in uploaded_files:
-        # Display file name
-        st.write(f"Uploaded file: {uploaded_file.name}")
+# Make the request with headers
+response = requests.get(url, headers=headers)
 
-        # Optionally read the file content (for text or CSV files)
-        if uploaded_file.type.startswith("text/"):
-            content = uploaded_file.read().decode("utf-8")
-            st.text_area(f"Content of {uploaded_file.name}", content, height=200)
-        
-        # Save the file locally if needed
-        with open(f"uploaded_{uploaded_file.name}", "wb") as f:
-            f.write(uploaded_file.getbuffer())
-            st.write(f"Saved {uploaded_file.name} locally.")
+# Check if the request was successful
+if response.status_code == 200:
+    # Save the PDF to a file
+    with open("document.pdf", "wb") as file:
+        file.write(response.content)
+    print("PDF downloaded successfully.")
+else:
+    print(f"Failed to download PDF. Status code: {response.status_code}")
