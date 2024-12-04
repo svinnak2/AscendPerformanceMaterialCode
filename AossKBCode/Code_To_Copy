@@ -1,12 +1,3 @@
-import os
-
-# Folder path
-folder_path = "/home/publicdirectory/"
-
-# Get all files in the folder
-files = []
-for file in os.listdir(folder_path):
-    if os.path.isfile(os.path.join(folder_path, file)):
-        files.append(file)
-
-print(files)
+- <span style="font-size:20px; color:red; font-family:Arial;">
+This is custom-styled text (20px, red, Arial).
+</span>
