@@ -1,24 +1,12 @@
-import re
+import os
 
-# List of input strings
-strings = [
-    "RFPPDF?rpt=FF101&id=102&dt=2024",
-    "RFPPDF?rpt=YP102&id=102&dt=2023",
-    "RFPPDF?rpt=ZK61&id=102&dt=2025"
-]
+# Folder path
+folder_path = "/home/publicdirectory/"
 
-# Function to convert the string
-def convert_string(input_string):
-    # Use regex to extract the desired parts
-    match = re.search(r"rpt=([^&]*)&id=([^&]*)&dt=([^&]*)", input_string)
-    if match:
-        # Combine the extracted parts with underscores
-        return f"{match.group(1)}_{match.group(2)}_{match.group(3)}"
-    else:
-        return None  # Return None if no match is found
+# Get all files in the folder
+files = []
+for file in os.listdir(folder_path):
+    if os.path.isfile(os.path.join(folder_path, file)):
+        files.append(file)
 
-# Apply the function to each string
-converted_strings = [convert_string(s) for s in strings]
-
-# Print the results
-print(converted_strings)
+print(files)
