@@ -1,3 +1,9 @@
-- <span style="font-size:20px; color:red; font-family:Arial;">
-This is custom-styled text (20px, red, Arial).
-</span>
+from datetime import datetime
+
+# Get today's date
+today_date = datetime.now()
+
+# Format the date as MM/DD/YYYY
+formatted_date = today_date.strftime("%m/%d/%Y")
+
+print(formatted_date)
