@@ -1,49 +1,55 @@
+import os
+import re
 from datetime import datetime
 
-# List of file names
-file_names = [
-    "Charles_Schwab_2024_Proxy_EarningsReports 9 Claude_Org Bkg.docx",
-    "schw_Sept2024_SMART_supplement EarningsReports 9_Claude Org_Bkg.docx",
-    "FRY9C 1026632 20240930 CallReports 7_Claude Org_Bkg.docx",
-    "schwab_annual_report_2023_part1_EarningsReports 9 Claude_Org Bkg.docx",
-    "FFIEC101 1026632 20240930 CallReports 7 Claude Org_Bkg.docx",
-    "schw fall_business update 10152024 BsnsUpdates 9 Claude_Org_Bkg.docx",
-    "SEC Form10k 2023_TenQK 2 Claude Org_Bkg.docx",
-    "SEC Form100 093024 TenQK 2 Claude Org Bkg.docx",
-    "schwab_q3_2024 earnings_release EarningsReports_9_Claude_Org_Bkg.docx",
-    "schwab_annual_report_2023_part0_EarningsReports_9_Claude_Org_Bkg.docx",
-    "BHCPR 1026632 20240630 CallReports 7_Claude_Org Bkg.docx"
-]
+# Directory path
+directory_path = "/home/CodeFiles/"
 
-# Function to extract date and convert to a sortable datetime object
-def extract_date(file_name):
-    # Look for YYYYMMDD or MMDDYY patterns
+# Map of month names to numeric values
+month_map = {
+    "Jan": "01", "Feb": "02", "Mar": "03", "Apr": "04", "May": "05", "Jun": "06",
+    "Jul": "07", "Aug": "08", "Sep": "09", "Sept": "09", "Oct": "10", "Nov": "11", "Dec": "12"
+}
+
+# Function to extract date from filename
+def extract_date(filename):
+    # Look for patterns like YYYYMMDD, MMDDYY, or MonthYYYY
     patterns = [
         r"(\d{8})",          # Matches YYYYMMDD
         r"(\d{6})",          # Matches MMDDYY
-        r"(\b\d{4}\b)"       # Matches standalone year YYYY
+        r"(\b\d{4}\b)",      # Matches standalone year YYYY
+        r"([A-Za-z]+)(\d{4})"  # Matches MonthYYYY (e.g., Sept2024)
     ]
     for pattern in patterns:
-        match = re.search(pattern, file_name)
+        match = re.search(pattern, filename)
         if match:
-            date_str = match.group(0)
             try:
                 # Try to parse YYYYMMDD
-                if len(date_str) == 8:
-                    return datetime.strptime(date_str, "%Y%m%d")
+                if len(match.group(0)) == 8:
+                    return datetime.strptime(match.group(0), "%Y%m%d")
                 # Try to parse MMDDYY
-                elif len(date_str) == 6:
-                    return datetime.strptime(date_str, "%m%d%y")
+                elif len(match.group(0)) == 6:
+                    return datetime.strptime(match.group(0), "%m%d%y")
                 # Parse standalone year
-                elif len(date_str) == 4:
-                    return datetime.strptime(date_str, "%Y")
+                elif len(match.group(0)) == 4:
+                    return datetime.strptime(match.group(0), "%Y")
+                # Parse MonthYYYY
+                elif len(match.groups()) == 2:
+                    month, year = match.groups()
+                    if month[:3] in month_map:
+                        month_num = month_map[month[:3]]
+                        return datetime.strptime(f"{year}{month_num}01", "%Y%m%d")
             except ValueError:
                 continue
-    return datetime.min  # Default for files with no recognizable date
+    return datetime.max  # Default for files with no recognizable date (sorted last)
 
-# Sort files based on extracted dates
-sorted_files = sorted(file_names, key=extract_date)
+# List all files in the directory
+files = [f for f in os.listdir(directory_path) if os.path.isfile(os.path.join(directory_path, f))]
 
-# Print sorted file names
+# Sort files by extracted date in ascending order
+sorted_files = sorted(files, key=extract_date)
+
+# Print sorted files
+print("Files Sorted by Ascending Date:")
 for file in sorted_files:
     print(file)
