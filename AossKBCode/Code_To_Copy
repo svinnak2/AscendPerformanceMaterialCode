@@ -1,55 +1,28 @@
 import os
-import re
-from datetime import datetime
+from docx import Document
 
-# Directory path
-directory_path = "/home/CodeFiles/"
+# Directory containing .docx files
+input_directory = "/home/outputfiles"
 
-# Map of month names to numeric values
-month_map = {
-    "Jan": "01", "Feb": "02", "Mar": "03", "Apr": "04", "May": "05", "Jun": "06",
-    "Jul": "07", "Aug": "08", "Sep": "09", "Sept": "09", "Oct": "10", "Nov": "11", "Dec": "12"
-}
+# Output file path
+output_file_path = "/home/outputfiles/merged_document.docx"
 
-# Function to extract date from filename
-def extract_date(filename):
-    # Look for patterns like YYYYMMDD, MMDDYY, or MonthYYYY
-    patterns = [
-        r"(\d{8})",          # Matches YYYYMMDD
-        r"(\d{6})",          # Matches MMDDYY
-        r"(\b\d{4}\b)",      # Matches standalone year YYYY
-        r"([A-Za-z]+)(\d{4})"  # Matches MonthYYYY (e.g., Sept2024)
-    ]
-    for pattern in patterns:
-        match = re.search(pattern, filename)
-        if match:
-            try:
-                # Try to parse YYYYMMDD
-                if len(match.group(0)) == 8:
-                    return datetime.strptime(match.group(0), "%Y%m%d")
-                # Try to parse MMDDYY
-                elif len(match.group(0)) == 6:
-                    return datetime.strptime(match.group(0), "%m%d%y")
-                # Parse standalone year
-                elif len(match.group(0)) == 4:
-                    return datetime.strptime(match.group(0), "%Y")
-                # Parse MonthYYYY
-                elif len(match.groups()) == 2:
-                    month, year = match.groups()
-                    if month[:3] in month_map:
-                        month_num = month_map[month[:3]]
-                        return datetime.strptime(f"{year}{month_num}01", "%Y%m%d")
-            except ValueError:
-                continue
-    return datetime.max  # Default for files with no recognizable date (sorted last)
+# Create a new Document for the merged content
+merged_document = Document()
 
-# List all files in the directory
-files = [f for f in os.listdir(directory_path) if os.path.isfile(os.path.join(directory_path, f))]
+# Iterate over all .docx files in the directory
+for filename in sorted(os.listdir(input_directory)):  # Sorting for consistent order
+    if filename.endswith(".docx"):
+        file_path = os.path.join(input_directory, filename)
+        # Load the .docx file
+        doc = Document(file_path)
+        # Append its content to the merged document
+        for paragraph in doc.paragraphs:
+            merged_document.add_paragraph(paragraph.text)
+        # Optionally, add a page break between documents
+        merged_document.add_page_break()
 
-# Sort files by extracted date in ascending order
-sorted_files = sorted(files, key=extract_date)
+# Save the merged document
+merged_document.save(output_file_path)
 
-# Print sorted files
-print("Files Sorted by Ascending Date:")
-for file in sorted_files:
-    print(file)
+print(f"Merged document saved at: {output_file_path}")
