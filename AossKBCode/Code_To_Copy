@@ -1,28 +1,34 @@
-import os
 from docx import Document
 
-# Directory containing .docx files
-input_directory = "/home/outputfiles"
+def add_paragraph_to_section(doc_path, section_title, new_paragraph_text, output_path):
+    # Load the Word document
+    doc = Document(doc_path)
 
-# Output file path
-output_file_path = "/home/outputfiles/merged_document.docx"
+    # Initialize a flag to determine if we are in the target section
+    in_target_section = False
 
-# Create a new Document for the merged content
-merged_document = Document()
+    # Iterate through the paragraphs in the document
+    for paragraph in doc.paragraphs:
+        # Check if the paragraph matches the section title
+        if section_title.lower() in paragraph.text.lower():
+            in_target_section = True
+            continue  # Skip the title itself
+        
+        # If we are in the target section, add the new paragraph
+        if in_target_section:
+            if paragraph.text.strip() == "":  # End of the section
+                paragraph.insert_paragraph_before(new_paragraph_text)
+                in_target_section = False
+                break
 
-# Iterate over all .docx files in the directory
-for filename in sorted(os.listdir(input_directory)):  # Sorting for consistent order
-    if filename.endswith(".docx"):
-        file_path = os.path.join(input_directory, filename)
-        # Load the .docx file
-        doc = Document(file_path)
-        # Append its content to the merged document
-        for paragraph in doc.paragraphs:
-            merged_document.add_paragraph(paragraph.text)
-        # Optionally, add a page break between documents
-        merged_document.add_page_break()
+    # Save the updated document
+    doc.save(output_path)
+    print(f"Paragraph added to section '{section_title}' and saved as '{output_path}'.")
 
-# Save the merged document
-merged_document.save(output_file_path)
+# Usage
+doc_path = "example.docx"  # Path to the input Word document
+section_title = "About company and its history"
+new_paragraph_text = "Our company was founded in 1990 and has been a leader in innovation ever since."
+output_path = "updated_example.docx"  # Path to the output Word document
 
-print(f"Merged document saved at: {output_file_path}")
+add_paragraph_to_section(doc_path, section_title, new_paragraph_text, output_path)
