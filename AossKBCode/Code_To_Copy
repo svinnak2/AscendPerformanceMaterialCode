@@ -1,34 +1,18 @@
-from docx import Document
+import re
 
-def add_paragraph_to_section(doc_path, section_title, new_paragraph_text, output_path):
-    # Load the Word document
-    doc = Document(doc_path)
+# Input text
+text = "blah shit Blah Shit <RedShift_SP> blah blah blah </RedShift_SP> and <Additional_Info> blah blah blah </Additional_Info>."
 
-    # Initialize a flag to determine if we are in the target section
-    in_target_section = False
+# Extract text between <RedShift_SP> tags
+redshift_match = re.search(r"<RedShift_SP>(.*?)</RedShift_SP>", text, re.DOTALL)
+if redshift_match:
+    redshift_content = redshift_match.group(1).strip()  # Get the matched content
+    with open("output.sql", "w") as sql_file:
+        sql_file.write(redshift_content)  # Save as .sql file
 
-    # Iterate through the paragraphs in the document
-    for paragraph in doc.paragraphs:
-        # Check if the paragraph matches the section title
-        if section_title.lower() in paragraph.text.lower():
-            in_target_section = True
-            continue  # Skip the title itself
-        
-        # If we are in the target section, add the new paragraph
-        if in_target_section:
-            if paragraph.text.strip() == "":  # End of the section
-                paragraph.insert_paragraph_before(new_paragraph_text)
-                in_target_section = False
-                break
-
-    # Save the updated document
-    doc.save(output_path)
-    print(f"Paragraph added to section '{section_title}' and saved as '{output_path}'.")
-
-# Usage
-doc_path = "example.docx"  # Path to the input Word document
-section_title = "About company and its history"
-new_paragraph_text = "Our company was founded in 1990 and has been a leader in innovation ever since."
-output_path = "updated_example.docx"  # Path to the output Word document
-
-add_paragraph_to_section(doc_path, section_title, new_paragraph_text, output_path)
+# Extract text between <Additional_Info> tags
+additional_info_match = re.search(r"<Additional_Info>(.*?)</Additional_Info>", text, re.DOTALL)
+if additional_info_match:
+    additional_info_content = additional_info_match.group(1).strip()  # Get the matched content
+    with open("output.txt", "w") as txt_file:
+        txt_file.write(additional_info_content)  # Save as .txt file
