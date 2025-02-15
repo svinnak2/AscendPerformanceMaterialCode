@@ -1,70 +1,38 @@
-# TFID
-
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-
-# Example documents
-doc1 = "Machine learning is a field of artificial intelligence."
-doc2 = "Artificial intelligence includes machine learning and deep learning."
-
-# Convert documents to TF-IDF vectors
-vectorizer = TfidfVectorizer()
-tfidf_matrix = vectorizer.fit_transform([doc1, doc2])
-
-# Compute cosine similarity
-similarity = cosine_similarity(tfidf_matrix[0], tfidf_matrix[1])
-print(f"Cosine Similarity: {similarity[0][0]:.4f}")
-
-
-# Jacard Similarity
-def jaccard_similarity(doc1, doc2):
-    words_doc1 = set(doc1.lower().split())
-    words_doc2 = set(doc2.lower().split())
-    intersection = words_doc1.intersection(words_doc2)
-    union = words_doc1.union(words_doc2)
-    return len(intersection) / len(union)
-
-doc1 = "Machine learning is a field of artificial intelligence."
-doc2 = "Artificial intelligence includes machine learning and deep learning."
-
-similarity = jaccard_similarity(doc1, doc2)
-print(f"Jaccard Similarity: {similarity:.4f}")
-
-# Levenshtein Distance (Edit Distance)
-import Levenshtein
-
-doc1 = "Machine learning is a field of AI."
-doc2 = "AI includes machine learning and deep learning."
-
-distance = Levenshtein.distance(doc1, doc2)
-print(f"Levenshtein Distance: {distance}")
-
-# Longest Common Subsequence (LCS)
-import difflib
-
-doc1 = "Machine learning is a field of AI."
-doc2 = "AI includes machine learning and deep learning."
-
-seq_match = difflib.SequenceMatcher(None, doc1, doc2)
-similarity = seq_match.ratio()
-print(f"LCS Similarity: {similarity:.4f}")
-
-# Semantic Similarity Using Word Embeddings (BERT)
 from sentence_transformers import SentenceTransformer, util
 
-# Load pre-trained model
-model = SentenceTransformer("all-MiniLM-L6-v2")
+# Load BERT Model for Semantic Similarity
+model = SentenceTransformer("all-MiniLM-L6-v2")  # Lightweight & fast model
 
-# Example documents
-doc1 = "Machine learning is a field of artificial intelligence."
-doc2 = "Artificial intelligence includes machine learning and deep learning."
+# Read content from file1.txt
+with open("/home/output/file1.txt", "r", encoding="utf-8") as f:
+    text1 = f.read().strip()
 
-# Compute embeddings
-embedding1 = model.encode(doc1, convert_to_tensor=True)
-embedding2 = model.encode(doc2, convert_to_tensor=True)
+# Read content from file2.txt
+with open("/home/output/file2.txt", "r", encoding="utf-8") as f:
+    text2 = f.read().strip()
 
-# Compute cosine similarity between embeddings
-similarity = util.pytorch_cos_sim(embedding1, embedding2)
-print(f"BERT Semantic Similarity: {similarity.item():.4f}")
+# Generate BERT embeddings
+embedding1 = model.encode(text1, convert_to_tensor=True)
+embedding2 = model.encode(text2, convert_to_tensor=True)
+
+# Compute Cosine Similarity
+similarity_score = util.pytorch_cos_sim(embedding1, embedding2).item()
+
+# Display Similarity Score
+print(f"🔍 Semantic Similarity Score: {similarity_score:.4f}")
+
+# Interpretation
+if similarity_score > 0.8:
+    print("✅ The files are highly similar.")
+elif similarity_score > 0.5:
+    print("⚠️ The files have moderate similarity.")
+else:
+    print("❌ The files are different.")
 
 
+
+
+# Read file content
+with open(file1_path, "r", encoding="utf-8") as f1, open(file2_path, "r", encoding="utf-8") as f2:
+    text1 = f1.read().strip()
+    text2 = f2.read().strip()
