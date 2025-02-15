@@ -1,38 +1,58 @@
+import pandas as pd
 from sentence_transformers import SentenceTransformer, util
+import difflib
 
-# Load BERT Model for Semantic Similarity
-model = SentenceTransformer("all-MiniLM-L6-v2")  # Lightweight & fast model
+# Load BERT model for semantic similarity
+bert_model = SentenceTransformer("all-MiniLM-L6-v2")
 
-# Read content from file1.txt
-with open("/home/output/file1.txt", "r", encoding="utf-8") as f:
-    text1 = f.read().strip()
+# Function to read file content
+def read_file(file_path):
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    except Exception as e:
+        print(f"Error reading {file_path}: {e}")
+        return ""
 
-# Read content from file2.txt
-with open("/home/output/file2.txt", "r", encoding="utf-8") as f:
-    text2 = f.read().strip()
+# Function to compute BERT Semantic Similarity
+def compute_bert_similarity(text1, text2):
+    if not text1 or not text2:
+        return 0.0
+    embedding1 = bert_model.encode(text1, convert_to_tensor=True)
+    embedding2 = bert_model.encode(text2, convert_to_tensor=True)
+    similarity_score = util.pytorch_cos_sim(embedding1, embedding2).item()
+    return round(similarity_score, 4)  # Rounded for readability
 
-# Generate BERT embeddings
-embedding1 = model.encode(text1, convert_to_tensor=True)
-embedding2 = model.encode(text2, convert_to_tensor=True)
+# Function to compute Longest Common Subsequence (LCS) similarity
+def compute_lcs_similarity(text1, text2):
+    if not text1 or not text2:
+        return 0.0
+    seq_match = difflib.SequenceMatcher(None, text1, text2)
+    return round(seq_match.ratio(), 4)  # LCS similarity (0-1 range)
 
-# Compute Cosine Similarity
-similarity_score = util.pytorch_cos_sim(embedding1, embedding2).item()
+# Iterate through final_df and compute similarity scores
+bert_scores = []
+lcs_scores = []
 
-# Display Similarity Score
-print(f"🔍 Semantic Similarity Score: {similarity_score:.4f}")
+for index, row in final_df.iterrows():
+    rs_file = row["RS_File_Name"]
+    aws_rs_file = row["AWS_RS_FileName"]
 
-# Interpretation
-if similarity_score > 0.8:
-    print("✅ The files are highly similar.")
-elif similarity_score > 0.5:
-    print("⚠️ The files have moderate similarity.")
-else:
-    print("❌ The files are different.")
+    # Read text from files
+    text1 = read_file(rs_file)
+    text2 = read_file(aws_rs_file)
 
+    # Compute similarity scores
+    bert_score = compute_bert_similarity(text1, text2)
+    lcs_score = compute_lcs_similarity(text1, text2)
 
+    # Store results
+    bert_scores.append(bert_score)
+    lcs_scores.append(lcs_score)
 
+# Append scores to DataFrame
+final_df["BERT_Similarity"] = bert_scores
+final_df["LCS_Similarity"] = lcs_scores
 
-# Read file content
-with open(file1_path, "r", encoding="utf-8") as f1, open(file2_path, "r", encoding="utf-8") as f2:
-    text1 = f1.read().strip()
-    text2 = f2.read().strip()
+# Display updated DataFrame
+print(final_df.head())
