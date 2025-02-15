@@ -1,18 +1,70 @@
-import re
+# TFID
 
-# Input text
-text = "blah shit Blah Shit <RedShift_SP> blah blah blah </RedShift_SP> and <Additional_Info> blah blah blah </Additional_Info>."
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
-# Extract text between <RedShift_SP> tags
-redshift_match = re.search(r"<RedShift_SP>(.*?)</RedShift_SP>", text, re.DOTALL)
-if redshift_match:
-    redshift_content = redshift_match.group(1).strip()  # Get the matched content
-    with open("output.sql", "w") as sql_file:
-        sql_file.write(redshift_content)  # Save as .sql file
+# Example documents
+doc1 = "Machine learning is a field of artificial intelligence."
+doc2 = "Artificial intelligence includes machine learning and deep learning."
 
-# Extract text between <Additional_Info> tags
-additional_info_match = re.search(r"<Additional_Info>(.*?)</Additional_Info>", text, re.DOTALL)
-if additional_info_match:
-    additional_info_content = additional_info_match.group(1).strip()  # Get the matched content
-    with open("output.txt", "w") as txt_file:
-        txt_file.write(additional_info_content)  # Save as .txt file
+# Convert documents to TF-IDF vectors
+vectorizer = TfidfVectorizer()
+tfidf_matrix = vectorizer.fit_transform([doc1, doc2])
+
+# Compute cosine similarity
+similarity = cosine_similarity(tfidf_matrix[0], tfidf_matrix[1])
+print(f"Cosine Similarity: {similarity[0][0]:.4f}")
+
+
+# Jacard Similarity
+def jaccard_similarity(doc1, doc2):
+    words_doc1 = set(doc1.lower().split())
+    words_doc2 = set(doc2.lower().split())
+    intersection = words_doc1.intersection(words_doc2)
+    union = words_doc1.union(words_doc2)
+    return len(intersection) / len(union)
+
+doc1 = "Machine learning is a field of artificial intelligence."
+doc2 = "Artificial intelligence includes machine learning and deep learning."
+
+similarity = jaccard_similarity(doc1, doc2)
+print(f"Jaccard Similarity: {similarity:.4f}")
+
+# Levenshtein Distance (Edit Distance)
+import Levenshtein
+
+doc1 = "Machine learning is a field of AI."
+doc2 = "AI includes machine learning and deep learning."
+
+distance = Levenshtein.distance(doc1, doc2)
+print(f"Levenshtein Distance: {distance}")
+
+# Longest Common Subsequence (LCS)
+import difflib
+
+doc1 = "Machine learning is a field of AI."
+doc2 = "AI includes machine learning and deep learning."
+
+seq_match = difflib.SequenceMatcher(None, doc1, doc2)
+similarity = seq_match.ratio()
+print(f"LCS Similarity: {similarity:.4f}")
+
+# Semantic Similarity Using Word Embeddings (BERT)
+from sentence_transformers import SentenceTransformer, util
+
+# Load pre-trained model
+model = SentenceTransformer("all-MiniLM-L6-v2")
+
+# Example documents
+doc1 = "Machine learning is a field of artificial intelligence."
+doc2 = "Artificial intelligence includes machine learning and deep learning."
+
+# Compute embeddings
+embedding1 = model.encode(doc1, convert_to_tensor=True)
+embedding2 = model.encode(doc2, convert_to_tensor=True)
+
+# Compute cosine similarity between embeddings
+similarity = util.pytorch_cos_sim(embedding1, embedding2)
+print(f"BERT Semantic Similarity: {similarity.item():.4f}")
+
+
