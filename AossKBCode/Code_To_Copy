@@ -1,58 +1,77 @@
-import pandas as pd
-from sentence_transformers import SentenceTransformer, util
-import difflib
+import boto3
+import json
+import io
+from PIL import Image
+import base64
 
-# Load BERT model for semantic similarity
-bert_model = SentenceTransformer("all-MiniLM-L6-v2")
+# Initialize AWS Bedrock client
+bedrock_runtime = boto3.client("bedrock-runtime")
 
-# Function to read file content
-def read_file(file_path):
+def load_image(image_path):
+    """Load an image and convert it to a base64 string."""
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            return f.read().strip()
+        with open(image_path, "rb") as image_file:
+            return base64.b64encode(image_file.read()).decode("utf-8")
     except Exception as e:
-        print(f"Error reading {file_path}: {e}")
-        return ""
+        print(f"Error loading image: {e}")
+        return None
 
-# Function to compute BERT Semantic Similarity
-def compute_bert_similarity(text1, text2):
-    if not text1 or not text2:
-        return 0.0
-    embedding1 = bert_model.encode(text1, convert_to_tensor=True)
-    embedding2 = bert_model.encode(text2, convert_to_tensor=True)
-    similarity_score = util.pytorch_cos_sim(embedding1, embedding2).item()
-    return round(similarity_score, 4)  # Rounded for readability
+def send_to_bedrock(text, image_base64=None):
+    """
+    Sends text and optional image to AWS Bedrock using Anthropic Claude models.
 
-# Function to compute Longest Common Subsequence (LCS) similarity
-def compute_lcs_similarity(text1, text2):
-    if not text1 or not text2:
-        return 0.0
-    seq_match = difflib.SequenceMatcher(None, text1, text2)
-    return round(seq_match.ratio(), 4)  # LCS similarity (0-1 range)
+    Args:
+        text (str): The text input.
+        image_base64 (str, optional): Base64-encoded image if provided.
 
-# Iterate through final_df and compute similarity scores
-bert_scores = []
-lcs_scores = []
+    Returns:
+        dict: Response from Bedrock Claude model.
+    """
+    # Constructing the payload for Bedrock request
+    payload = {
+        "prompt": text,  # Anthropic Claude uses `prompt`
+        "max_tokens": 500,  # Set desired response length
+        "temperature": 0.7  # Adjust creativity level
+    }
 
-for index, row in final_df.iterrows():
-    rs_file = row["RS_File_Name"]
-    aws_rs_file = row["AWS_RS_FileName"]
+    # If an image is provided, add it to the request
+    if image_base64:
+        payload["image"] = image_base64  # Assume Claude multimodal accepts `image` field
 
-    # Read text from files
-    text1 = read_file(rs_file)
-    text2 = read_file(aws_rs_file)
+    try:
+        response = bedrock_runtime.invoke_model(
+            modelId="anthropic.claude-v2",  # Change to the required Claude model
+            contentType="application/json",
+            accept="application/json",
+            body=json.dumps(payload)
+        )
 
-    # Compute similarity scores
-    bert_score = compute_bert_similarity(text1, text2)
-    lcs_score = compute_lcs_similarity(text1, text2)
+        # Parse the response from Bedrock
+        response_body = json.loads(response["body"].read())
+        return response_body
 
-    # Store results
-    bert_scores.append(bert_score)
-    lcs_scores.append(lcs_score)
+    except Exception as e:
+        print(f"Error sending request to AWS Bedrock: {e}")
+        return None
 
-# Append scores to DataFrame
-final_df["BERT_Similarity"] = bert_scores
-final_df["LCS_Similarity"] = lcs_scores
+def main():
+    """Handles user input and sends it to AWS Bedrock."""
+    text = input("Enter text: ").strip()
+    image_path = input("Enter image path (leave blank if no image): ").strip()
 
-# Display updated DataFrame
-print(final_df.head())
+    if not text:
+        print("Text input is required.")
+        return
+
+    image_base64 = None
+    if image_path:
+        image_base64 = load_image(image_path)
+        if not image_base64:
+            print("Invalid image path. Proceeding with text only.")
+
+    # Send request to AWS Bedrock
+    response = send_to_bedrock(text, image_base64)
+    print("AWS Bedrock Response:", response)
+
+if __name__ == "__main__":
+    main()
