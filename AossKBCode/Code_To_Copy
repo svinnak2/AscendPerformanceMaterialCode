@@ -1,77 +1,26 @@
-import boto3
-import json
-import io
-from PIL import Image
-import base64
+import xml.etree.ElementTree as ET
 
-# Initialize AWS Bedrock client
-bedrock_runtime = boto3.client("bedrock-runtime")
+# Load the XML file
+xml_file_path = "/mnt/data/COMPTIME.XML"  # Adjust path if needed
+tree = ET.parse(xml_file_path)
+root = tree.getroot()
 
-def load_image(image_path):
-    """Load an image and convert it to a base64 string."""
-    try:
-        with open(image_path, "rb") as image_file:
-            return base64.b64encode(image_file.read()).decode("utf-8")
-    except Exception as e:
-        print(f"Error loading image: {e}")
-        return None
+# Define tags to extract
+tags_to_extract = ["SOURCE", "TRANSFORMATION", "TARGET"]
 
-def send_to_bedrock(text, image_base64=None):
-    """
-    Sends text and optional image to AWS Bedrock using Anthropic Claude models.
+# Iterate through specified tags
+for tag in tags_to_extract:
+    for element in root.findall(f".//{tag}"):
+        name_attr = element.get("NAME")  # Extract NAME attribute
+        if name_attr:
+            file_name = f"{name_attr}.xml"  # Create file name
 
-    Args:
-        text (str): The text input.
-        image_base64 (str, optional): Base64-encoded image if provided.
+            # Convert the XML element to string format
+            element_string = ET.tostring(element, encoding="unicode")
 
-    Returns:
-        dict: Response from Bedrock Claude model.
-    """
-    # Constructing the payload for Bedrock request
-    payload = {
-        "prompt": text,  # Anthropic Claude uses `prompt`
-        "max_tokens": 500,  # Set desired response length
-        "temperature": 0.7  # Adjust creativity level
-    }
+            # Save to a new file
+            with open(file_name, "w", encoding="utf-8") as file:
+                file.write(f'<?xml version="1.0" encoding="UTF-8"?>\n')
+                file.write(element_string)
 
-    # If an image is provided, add it to the request
-    if image_base64:
-        payload["image"] = image_base64  # Assume Claude multimodal accepts `image` field
-
-    try:
-        response = bedrock_runtime.invoke_model(
-            modelId="anthropic.claude-v2",  # Change to the required Claude model
-            contentType="application/json",
-            accept="application/json",
-            body=json.dumps(payload)
-        )
-
-        # Parse the response from Bedrock
-        response_body = json.loads(response["body"].read())
-        return response_body
-
-    except Exception as e:
-        print(f"Error sending request to AWS Bedrock: {e}")
-        return None
-
-def main():
-    """Handles user input and sends it to AWS Bedrock."""
-    text = input("Enter text: ").strip()
-    image_path = input("Enter image path (leave blank if no image): ").strip()
-
-    if not text:
-        print("Text input is required.")
-        return
-
-    image_base64 = None
-    if image_path:
-        image_base64 = load_image(image_path)
-        if not image_base64:
-            print("Invalid image path. Proceeding with text only.")
-
-    # Send request to AWS Bedrock
-    response = send_to_bedrock(text, image_base64)
-    print("AWS Bedrock Response:", response)
-
-if __name__ == "__main__":
-    main()
+            print(f"✅ Extracted and saved: {file_name}")
