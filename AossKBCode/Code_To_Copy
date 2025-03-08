@@ -1,26 +1,33 @@
+import os
 import xml.etree.ElementTree as ET
 
-# Load the XML file
-xml_file_path = "/mnt/data/COMPTIME.XML"  # Adjust path if needed
-tree = ET.parse(xml_file_path)
-root = tree.getroot()
+# ✅ Define the parent directory containing subfolders
+parent_directory = "/home/ec2"  # Adjust the path as needed
 
-# Define tags to extract
-tags_to_extract = ["SOURCE", "TRANSFORMATION", "TARGET"]
+# ✅ Iterate through each folder inside the parent directory
+for folder in os.listdir(parent_directory):
+    folder_path = os.path.join(parent_directory, folder)
 
-# Iterate through specified tags
-for tag in tags_to_extract:
-    for element in root.findall(f".//{tag}"):
-        name_attr = element.get("NAME")  # Extract NAME attribute
-        if name_attr:
-            file_name = f"{name_attr}.xml"  # Create file name
+    # ✅ Check if it's a directory (skip files)
+    if os.path.isdir(folder_path):
+        print(f"📂 Entering folder: {folder}")
 
-            # Convert the XML element to string format
-            element_string = ET.tostring(element, encoding="unicode")
+        # ✅ List all XML files in the folder
+        xml_files = [f for f in os.listdir(folder_path) if f.endswith(".xml")]
 
-            # Save to a new file
-            with open(file_name, "w", encoding="utf-8") as file:
-                file.write(f'<?xml version="1.0" encoding="UTF-8"?>\n')
-                file.write(element_string)
+        # ✅ Process each XML file in the folder
+        for xml_file in xml_files:
+            file_path = os.path.join(folder_path, xml_file)
 
-            print(f"✅ Extracted and saved: {file_name}")
+            try:
+                # ✅ Parse the XML file
+                tree = ET.parse(file_path)
+                root = tree.getroot()
+
+                print(f"✅ Processing file: {xml_file} in {folder}")
+                print(f"Root tag: {root.tag}")
+
+                # ✅ Add further XML processing logic here
+
+            except Exception as e:
+                print(f"❌ Error processing {xml_file} in {folder}: {e}")
