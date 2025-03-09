@@ -1,33 +1,71 @@
-import os
+import boto3
 import xml.etree.ElementTree as ET
+import os
+import html
+import re
 
-# ✅ Define the parent directory containing subfolders
-parent_directory = "/home/ec2"  # Adjust the path as needed
+# ✅ Define S3 details
+bucket_name = "your-bucket-name"  # Replace with your actual S3 bucket name
+s3_key = "your-folder-name/COMPTIME.XML"  # S3 file path (adjust if needed)
 
-# ✅ Iterate through each folder inside the parent directory
-for folder in os.listdir(parent_directory):
-    folder_path = os.path.join(parent_directory, folder)
+# ✅ Define local save directory
+local_directory = "/home/ec2"  # Adjust if needed
+os.makedirs(local_directory, exist_ok=True)  # Ensure directory exists
 
-    # ✅ Check if it's a directory (skip files)
-    if os.path.isdir(folder_path):
-        print(f"📂 Entering folder: {folder}")
+# ✅ Define S3 client
+s3_client = boto3.client("s3")
 
-        # ✅ List all XML files in the folder
-        xml_files = [f for f in os.listdir(folder_path) if f.endswith(".xml")]
+# ✅ Define local file path to temporarily store the XML
+local_xml_path = os.path.join(local_directory, "COMPTIME.XML")
 
-        # ✅ Process each XML file in the folder
-        for xml_file in xml_files:
-            file_path = os.path.join(folder_path, xml_file)
+# ✅ Download XML file from S3
+try:
+    s3_client.download_file(bucket_name, s3_key, local_xml_path)
+    print(f"✅ XML file downloaded from S3: {local_xml_path}")
+except Exception as e:
+    print(f"❌ Error downloading XML file: {e}")
+    exit()
 
-            try:
-                # ✅ Parse the XML file
-                tree = ET.parse(file_path)
-                root = tree.getroot()
+# ✅ Function to clean XML content
+def clean_xml_text(text):
+    if text:
+        text = html.unescape(text)  # Convert &gt; → >, &lt; → <, etc.
+        text = re.sub(r'[\r\n\t]', '', text)  # Remove newlines, carriage returns, tabs
+        text = text.strip()  # Trim extra spaces
+    return text
 
-                print(f"✅ Processing file: {xml_file} in {folder}")
-                print(f"Root tag: {root.tag}")
+# ✅ Parse the XML file
+try:
+    tree = ET.parse(local_xml_path)
+    root = tree.getroot()
 
-                # ✅ Add further XML processing logic here
+    # ✅ Clean all text and tail content in XML elements
+    for elem in root.iter():
+        if elem.text:
+            elem.text = clean_xml_text(elem.text)
+        if elem.tail:
+            elem.tail = clean_xml_text(elem.tail)
 
-            except Exception as e:
-                print(f"❌ Error processing {xml_file} in {folder}: {e}")
+    # ✅ Define tags to extract
+    tags_to_extract = ["SOURCE", "TRANSFORMATION", "TARGET"]
+
+    # ✅ Iterate through specified tags and extract elements
+    for tag in tags_to_extract:
+        for element in root.findall(f".//{tag}"):
+            name_attr = element.get("NAME")  # Extract NAME attribute
+            if name_attr:
+                file_name = f"{name_attr}.xml"  # Create file name
+                file_path = os.path.join(local_directory, file_name)
+
+                # Convert the cleaned XML element to string format
+                element_string = ET.tostring(element, encoding="unicode")
+
+                # ✅ Save each extracted element as a separate XML file
+                with open(file_path, "w", encoding="utf-8") as file:
+                    file.write(f'<?xml version="1.0" encoding="UTF-8"?>\n')
+                    file.write(element_string)
+
+                print(f"✅ Extracted and saved: {file_path}")
+
+except Exception as e:
+    print(f"❌ Error processing XML file: {e}")
