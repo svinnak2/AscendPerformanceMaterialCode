@@ -1,71 +1,65 @@
+from fastapi import FastAPI, UploadFile, File
+from pydantic import BaseModel
 import boto3
-import xml.etree.ElementTree as ET
-import os
-import html
-import re
+import json
+import io
+from PIL import Image
+import base64
 
-# ✅ Define S3 details
-bucket_name = "your-bucket-name"  # Replace with your actual S3 bucket name
-s3_key = "your-folder-name/COMPTIME.XML"  # S3 file path (adjust if needed)
+# Initialize FastAPI app
+app = FastAPI()
 
-# ✅ Define local save directory
-local_directory = "/home/ec2"  # Adjust if needed
-os.makedirs(local_directory, exist_ok=True)  # Ensure directory exists
+# Initialize AWS Bedrock client
+bedrock_runtime = boto3.client("bedrock-runtime")
 
-# ✅ Define S3 client
-s3_client = boto3.client("s3")
+# Request Model
+class RequestData(BaseModel):
+    model_id: str
+    user_task: str
+    streaming: bool = False
 
-# ✅ Define local file path to temporarily store the XML
-local_xml_path = os.path.join(local_directory, "COMPTIME.XML")
+def load_image(image: UploadFile):
+    """Convert uploaded image to base64."""
+    try:
+        image_data = image.file.read()
+        return base64.b64encode(image_data).decode("utf-8")
+    except Exception as e:
+        print(f"Error processing image: {e}")
+        return None
 
-# ✅ Download XML file from S3
-try:
-    s3_client.download_file(bucket_name, s3_key, local_xml_path)
-    print(f"✅ XML file downloaded from S3: {local_xml_path}")
-except Exception as e:
-    print(f"❌ Error downloading XML file: {e}")
-    exit()
+def send_request_to_llm(model_id, user_task, streaming, image_base64=None):
+    """Send request to AWS Bedrock."""
+    payload = {
+        "prompt": user_task,
+        "max_tokens": 500,  # Adjust as needed
+        "temperature": 0.7,
+        "stream": streaming
+    }
 
-# ✅ Function to clean XML content
-def clean_xml_text(text):
-    if text:
-        text = html.unescape(text)  # Convert &gt; → >, &lt; → <, etc.
-        text = re.sub(r'[\r\n\t]', '', text)  # Remove newlines, carriage returns, tabs
-        text = text.strip()  # Trim extra spaces
-    return text
+    if image_base64:
+        payload["image"] = image_base64  # Include image if provided
 
-# ✅ Parse the XML file
-try:
-    tree = ET.parse(local_xml_path)
-    root = tree.getroot()
+    try:
+        response = bedrock_runtime.invoke_model(
+            modelId=model_id,
+            contentType="application/json",
+            accept="application/json",
+            body=json.dumps(payload)
+        )
 
-    # ✅ Clean all text and tail content in XML elements
-    for elem in root.iter():
-        if elem.text:
-            elem.text = clean_xml_text(elem.text)
-        if elem.tail:
-            elem.tail = clean_xml_text(elem.tail)
+        response_body = json.loads(response["body"].read())
+        return {"status": "success", "text": response_body.get("completion", "No response")}
 
-    # ✅ Define tags to extract
-    tags_to_extract = ["SOURCE", "TRANSFORMATION", "TARGET"]
+    except Exception as e:
+        return {"status": "error", "text": str(e)}
 
-    # ✅ Iterate through specified tags and extract elements
-    for tag in tags_to_extract:
-        for element in root.findall(f".//{tag}"):
-            name_attr = element.get("NAME")  # Extract NAME attribute
-            if name_attr:
-                file_name = f"{name_attr}.xml"  # Create file name
-                file_path = os.path.join(local_directory, file_name)
+@app.post("/generate")
+async def generate_response(data: RequestData, image: UploadFile = File(None)):
+    """API endpoint to process text and optional image."""
+    image_base64 = None
+    if image:
+        image_base64 = load_image(image)
 
-                # Convert the cleaned XML element to string format
-                element_string = ET.tostring(element, encoding="unicode")
+    result = send_request_to_llm(data.model_id, data.user_task, data.streaming, image_base64)
+    return result
 
-                # ✅ Save each extracted element as a separate XML file
-                with open(file_path, "w", encoding="utf-8") as file:
-                    file.write(f'<?xml version="1.0" encoding="UTF-8"?>\n')
-                    file.write(element_string)
-
-                print(f"✅ Extracted and saved: {file_path}")
-
-except Exception as e:
-    print(f"❌ Error processing XML file: {e}")
