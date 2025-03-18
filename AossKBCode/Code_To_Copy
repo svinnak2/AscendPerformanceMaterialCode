@@ -63,3 +63,29 @@ async def generate_response(data: RequestData, image: UploadFile = File(None)):
     result = send_request_to_llm(data.model_id, data.user_task, data.streaming, image_base64)
     return result
 
+
+uvicorn api:app --host 0.0.0.0 --port 8000 --reload
+
+
+import requests
+
+url = "http://127.0.0.1:8000/generate"
+data = {
+    "model_id": "anthropic.claude-v2",
+    "user_task": "Explain Quantum Computing in detail",
+    "streaming": False
+}
+
+response = requests.post(url, json=data)
+print(response.json())
+
+
+
+curl -X 'POST' \
+  'http://127.0.0.1:8000/generate' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "model_id": "anthropic.claude-v2",
+  "user_task": "Explain Quantum Computing in detail",
+  "streaming": false
+}'
