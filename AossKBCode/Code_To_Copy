@@ -1,41 +1,38 @@
 import xml.etree.ElementTree as ET
 import os
 
-# ✅ Define XML file path
-xml_file_path = "/home/ec2/your-informatica.xml"  # Change to your actual file path
-output_file_path = "/home/ec2/connectors.txt"  # Change to your desired output path
+# ✅ Define XML file path (Update with actual path)
+xml_file_path = "/home/ec2/your-informatica.xml"
+output_file_path = "/home/ec2/filtered_connectors.txt"
 
 # ✅ Parse the XML file
 try:
     tree = ET.parse(xml_file_path)
     root = tree.getroot()
 
-    # ✅ Open output file for writing
-    with open(output_file_path, "w", encoding="utf-8") as output_file:
+    # ✅ Set to store unique (FROMINSTANCE, TOINSTANCETYPE) pairs
+    unique_pairs = set()
 
-        # ✅ Iterate through <MAPPING> elements
-        for mapping in root.findall(".//MAPPING"):
-            mapping_name = mapping.get("NAME")  # Extract MAPPING NAME attribute
+    # ✅ Iterate through all <CONNECTOR> elements
+    for connector in root.findall(".//CONNECTOR"):
+        from_instance = connector.get("FROMINSTANCE")
+        to_instance_type = connector.get("TOINSTANCETYPE")
 
-            # ✅ Ignore mappings with NAME="mplt_MD5_Hash_Key"
-            if mapping_name == "mplt_MD5_Hash_Key":
-                print(f"🚫 Ignoring mapping: {mapping_name}")
-                continue  # Skip this mapping
+        # ✅ Ensure values exist before adding to the set
+        if from_instance and to_instance_type:
+            unique_pairs.add((from_instance, to_instance_type))
 
-            print(f"✅ Processing mapping: {mapping_name}")
-            output_file.write(f"Mapping: {mapping_name}\n")  # Write mapping name in output file
+    # ✅ Print and save unique pairs with quoted values
+    if unique_pairs:
+        with open(output_file_path, "w", encoding="utf-8") as output_file:
+            for from_instance, to_instance_type in unique_pairs:
+                line = f'FROMINSTANCE="{from_instance}", TOINSTANCETYPE="{to_instance_type}"'
+                print(line)  # Print to console
+                output_file.write(line + "\n")  # Save to file
 
-            # ✅ Extract <CONNECTOR> elements from this mapping
-            connectors = mapping.findall(".//CONNECTOR")
-
-            for connector in connectors:
-                connector_str = ET.tostring(connector, encoding="unicode").strip()
-                print(connector_str)  # Print extracted CONNECTOR elements
-                output_file.write(connector_str + "\n")  # Save to file
-
-            output_file.write("\n")  # Add newline between mappings for readability
-
-    print(f"✅ All CONNECTOR elements saved to: {output_file_path}")
+        print(f"\n✅ Unique FROMINSTANCE & TOINSTANCETYPE pairs saved to: {output_file_path}")
+    else:
+        print("⚠️ No matching connectors found.")
 
 except Exception as e:
     print(f"❌ Error processing XML file: {e}")
