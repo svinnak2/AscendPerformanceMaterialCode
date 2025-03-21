@@ -1,38 +1,29 @@
-import xml.etree.ElementTree as ET
-import os
+import networkx as nx
+import matplotlib.pyplot as plt
 
-# ✅ Define XML file path (Update with actual path)
-xml_file_path = "/home/ec2/your-informatica.xml"
-output_file_path = "/home/ec2/filtered_connectors.txt"
+# ✅ Define relationships extracted by the LLM
+relationships = [
+    ("Alice", "knows", "Bob"),
+    ("Bob", "works at", "Google"),
+    ("Alice", "studied at", "MIT"),
+    ("Google", "acquired", "DeepMind")
+]
 
-# ✅ Parse the XML file
-try:
-    tree = ET.parse(xml_file_path)
-    root = tree.getroot()
+# ✅ Create a directed graph
+G = nx.DiGraph()
 
-    # ✅ Set to store unique (FROMINSTANCE, TOINSTANCETYPE) pairs
-    unique_pairs = set()
+# ✅ Add edges to the graph
+for entity1, relation, entity2 in relationships:
+    G.add_edge(entity1, entity2, label=relation)
 
-    # ✅ Iterate through all <CONNECTOR> elements
-    for connector in root.findall(".//CONNECTOR"):
-        from_instance = connector.get("FROMINSTANCE")
-        to_instance_type = connector.get("TOINSTANCETYPE")
+# ✅ Draw the graph
+plt.figure(figsize=(8,6))
+pos = nx.spring_layout(G)  # Layout positioning
+nx.draw(G, pos, with_labels=True, node_color="lightblue", edge_color="gray", node_size=2000, font_size=10)
 
-        # ✅ Ensure values exist before adding to the set
-        if from_instance and to_instance_type:
-            unique_pairs.add((from_instance, to_instance_type))
+# ✅ Draw edge labels
+edge_labels = {(entity1, entity2): relation for entity1, relation, entity2 in relationships}
+nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red')
 
-    # ✅ Print and save unique pairs with quoted values
-    if unique_pairs:
-        with open(output_file_path, "w", encoding="utf-8") as output_file:
-            for from_instance, to_instance_type in unique_pairs:
-                line = f'FROMINSTANCE="{from_instance}", TOINSTANCETYPE="{to_instance_type}"'
-                print(line)  # Print to console
-                output_file.write(line + "\n")  # Save to file
-
-        print(f"\n✅ Unique FROMINSTANCE & TOINSTANCETYPE pairs saved to: {output_file_path}")
-    else:
-        print("⚠️ No matching connectors found.")
-
-except Exception as e:
-    print(f"❌ Error processing XML file: {e}")
+plt.title("Network Diagram Generated from Text")
+plt.show()
