@@ -1,29 +1,13 @@
-import networkx as nx
-import matplotlib.pyplot as plt
+# ✅ Print and save as Python-style list of tuples
+if unique_pairs:
+    with open(output_file_path, "w", encoding="utf-8") as output_file:
+        output_file.write("relationships = [\n")
+        for from_instance, to_instance_type in unique_pairs:
+            line = f'    ("{from_instance}", "connected to", "{to_instance_type}"),'
+            print(line)
+            output_file.write(line + "\n")
+        output_file.write("]\n")
 
-# ✅ Define relationships extracted by the LLM
-relationships = [
-    ("Alice", "knows", "Bob"),
-    ("Bob", "works at", "Google"),
-    ("Alice", "studied at", "MIT"),
-    ("Google", "acquired", "DeepMind")
-]
-
-# ✅ Create a directed graph
-G = nx.DiGraph()
-
-# ✅ Add edges to the graph
-for entity1, relation, entity2 in relationships:
-    G.add_edge(entity1, entity2, label=relation)
-
-# ✅ Draw the graph
-plt.figure(figsize=(8,6))
-pos = nx.spring_layout(G)  # Layout positioning
-nx.draw(G, pos, with_labels=True, node_color="lightblue", edge_color="gray", node_size=2000, font_size=10)
-
-# ✅ Draw edge labels
-edge_labels = {(entity1, entity2): relation for entity1, relation, entity2 in relationships}
-nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red')
-
-plt.title("Network Diagram Generated from Text")
-plt.show()
+    print(f"\n✅ Relationship tuples saved to: {output_file_path}")
+else:
+    print("⚠️ No matching connectors found.")
